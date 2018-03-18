@@ -4,7 +4,7 @@ Library to work with Xiaomi MiBand 2
 # Contributors & Info Sources
 1) Base lib provided by [Leo Soares](https://github.com/leojrfs/miband2)
 2) Additional debug & fixes was made by my friend [Volodymyr Shymanskyy](https://github.com/vshymanskyy/miband2-python-test)
-3) Some info that really helped i got from (Freeyourgadget team)[https://github.com/Freeyourgadget/Gadgetbridge/tree/master/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/miband2]
+3) Some info that really helped i got from [Freeyourgadget team](https://github.com/Freeyourgadget/Gadgetbridge/tree/master/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/miband2)
 
 # Run 
 
