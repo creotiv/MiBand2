@@ -252,7 +252,7 @@ class MiBand2(Peripheral):
             # start continous
             self._char_heart_ctrl.write(b'\x15\x01\x01', True)
             while timeout_base > time.time():
-                band.waitForNotifications(self.timeout)
+                self.waitForNotifications(self.timeout)
                 res = self._get_from_queue(QUEUE_TYPES.HEART)
                 if res:
                     callback(res)
