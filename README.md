@@ -27,5 +27,5 @@ python example.py MAC_ADDRESS
 sudo hciconfig hci0 reset
 ```
 
-# Donation
+# Donate
 If you like what im doing, you can send me some money for pepsi(i dont drink alcohol). https://www.paypal.me/creotiv
