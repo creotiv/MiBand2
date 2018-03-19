@@ -18,16 +18,15 @@ pip install -r requirements.txt
 ```sh
 sudo hcitool lescan
 ```
-5) Run example.py
-This will auth device
+5) Run this to auth device
 ```sh
 python example.py MAC_ADDRESS init
 ```
-This will run demo
+6) Run this to call demo functions
 ```sh
 python example.py MAC_ADDRESS
 ```
-6) If you having problems(BLE can glitch sometimes) try this and repeat from 4)
+7) If you having problems(BLE can glitch sometimes) try this and repeat from 4)
 ```sh
 sudo hciconfig hci0 reset
 ```
