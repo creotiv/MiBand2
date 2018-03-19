@@ -228,7 +228,7 @@ class MiBand2(Peripheral):
         self._char_heart_ctrl.write(b'\x15\x02\x01', True)
         res = None
         while not res:
-            band.waitForNotifications(self.timeout)
+            self.waitForNotifications(self.timeout)
             res = self._get_from_queue(QUEUE_TYPES.HEART)
 
         rate = res
