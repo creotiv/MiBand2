@@ -19,6 +19,11 @@ pip install -r requirements.txt
 sudo hcitool lescan
 ```
 5) Run example.py
+This will auth device
+```sh
+python example.py MAC_ADDRESS init
+```
+This will run demo
 ```sh
 python example.py MAC_ADDRESS
 ```
