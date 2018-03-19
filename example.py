@@ -8,7 +8,7 @@ MAC = sys.argv[1]
 band = MiBand2(MAC, debug=True)
 band.setSecurityLevel(level="medium")
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 2:
     band.initialize()
     band.disconnect()
     sys.exit(0)
