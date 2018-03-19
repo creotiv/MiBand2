@@ -2,6 +2,7 @@ import sys
 import os
 import time
 from base import MiBand2
+from bluepy.btle import BTLEException
 
 MAC = sys.argv[1]
 filepath = sys.argv[2]
@@ -16,9 +17,13 @@ def log(rate):
     fp.write(data)
     print data
 
-band = MiBand2(MAC, debug=True)
-band.setSecurityLevel(level="medium")
-band.authenticate()
-band.get_heart_rate_realtime(log, 60 * 60 * 12)
+while True:
+    try:
+        band = MiBand2(MAC, debug=True)
+        band.setSecurityLevel(level="medium")
+        band.authenticate()
+        band.get_heart_rate_realtime(log, 60 * 60 * 12)
 
-band.disconnect()
+        band.disconnect()
+    except BTLEException:
+        pass
