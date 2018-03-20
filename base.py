@@ -39,10 +39,12 @@ class AuthenticationDelegate(DefaultDelegate):
             else:
                 self.device.state = AUTH_STATES.AUTH_FAILED
         elif hnd == self.device._char_heart_measure.getHandle():
+            print 'LEN:', len(data)
             rate = struct.unpack('bb', data)[1]
             self.device.queue.put((QUEUE_TYPES.HEART, rate))
         else:
-            self.device._log.error("Unhandled Response " + hex(hnd) + ": " + str(data.encode("hex")))
+            self.device._log.error("Unhandled Response " + hex(hnd) + ": " +
+                                   str(data.encode("hex")) + " len:" + str(len(data)))
 
 
 class MiBand2(Peripheral):
@@ -257,3 +259,58 @@ class MiBand2(Peripheral):
                 if res:
                     callback(res)
 
+    def debug(self):
+        char_m = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_MEASURE)[0]
+        char_d = char_m.getDescriptors(forUUID=UUIDS.CHARACTERISTIC_HEART_RATE_CONFIG)[0]
+        char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
+
+        char_sensor1 = self.svc_1.getCharacteristics('000000020000351221180009af100700')[0]
+        char_sens_d1 = char_sensor1.getDescriptors(forUUID=0x2902)[0]
+
+        char_sensor2 = self.svc_1.getCharacteristics('000000010000351221180009af100700')[0]
+        char_sens_d2 = char_sensor2.getDescriptors(forUUID=0x2902)[0]
+
+        char_sensor3 = self.svc_1.getCharacteristics('000000070000351221180009af100700')[0]
+        char_sens_d3 = char_sensor3.getDescriptors(forUUID=0x2902)[0]
+
+        # stop heart monitor continues
+        char_ctrl.write(b'\x15\x01\x00', True)
+        # stop heart monitor notifications
+        char_d.write(b'\x00\x00', True)
+        # IMO: enable notifications from Sensor 1
+        char_sens_d1.write(b'\x01\x00', True)
+
+        # IMO: This set band to get raw measures and processed heart measures in parallel
+        char_sens_d2.write(b'\x01\x00', True)
+        char_sensor2.write(b'\x01\x03\x19')
+        char_sens_d2.write(b'\x00\x00', True)
+
+        # char_sens_d3.write(b'\x01\x00', True)
+
+        # IMO: enablee heart monitor notifications
+        char_d.write(b'\x01\x00', True)
+
+        # start hear monitor continues
+        char_ctrl.write(b'\x15\x01\x01', True)
+        # WTF
+        char_sensor2.write(b'\x02')
+        try:
+            while True:
+                self.waitForNotifications(0.5)
+                char_ctrl.write(b'\x16')
+                char_sensor2.write(b'\x00\x00')
+        except Exception as e:
+            print e
+            pass
+        finally:
+            # stop heart monitor continues
+            char_ctrl.write(b'\x15\x01\x00', True)
+            char_ctrl.write(b'\x15\x01\x00', True)
+            # IMO: stop heart monitor notifications
+            char_d.write(b'\x00\x00', True)
+            # WTF
+            char_sensor2.write(b'\x03')
+            # IMO: stop notifications from sensors
+            char_sens_d1.write(b'\x00\x00', True)
+            char_sens_d2.write(b'\x00\x00', True)
+            char_sens_d3.write(b'\x00\x00', True)
