@@ -44,9 +44,9 @@ class AuthenticationDelegate(DefaultDelegate):
             self.device.queue.put((QUEUE_TYPES.HEART, data))
         elif hnd == 0x38:
             # Not sure about this, need test
-            if len(data) == 20:
+            if len(data) == 20 and struct.unpack('b', data[0])[0] == 1:
                 self.device.queue.put((QUEUE_TYPES.RAW_ACCEL, data))
-            elif len(data) < 20:
+            elif len(data) == 16:
                 self.device.queue.put((QUEUE_TYPES.RAW_HEART, data))
         else:
             self.device._log.error("Unhandled Response " + hex(hnd) + ": " +
@@ -133,10 +133,21 @@ class MiBand2(Peripheral):
     # Parse helpers ###################################################################
 
     def _parse_raw_accel(self, bytes):
-        return bytes
+        res = []
+        for i in xrange(3):
+            g = struct.unpack('hhh', bytes[2 + i * 6:8 + i * 6])
+            res.append({'x': g[0], 'y': g[1], 'wtf': g[2]})
+        # WTF
+        # if len(bytes) == 20 and struct.unpack('b', bytes[0])[0] == 2:
+        #     print struct.unpack('B', bytes[1])
+        #     print "Accel x: %s y: %s z: %s" % struct.unpack('hhh', bytes[2:8])
+        #     print "Accel x: %s y: %s z: %s" % struct.unpack('hhh', bytes[8:14])
+        #     print "Accel x: %s y: %s z: %s" % struct.unpack('hhh', bytes[14:])
+        return res
 
     def _parse_raw_heart(self, bytes):
-        return bytes
+        res = struct.unpack('HHHHHHH', bytes[2:])
+        return res
 
     def _parse_date(self, bytes):
         year = struct.unpack('h', bytes[0:2])[0] if len(bytes) >= 2 else None
@@ -350,7 +361,7 @@ class MiBand2(Peripheral):
         if accel_raw_callback:
             self.accel_raw_callback = accel_raw_callback
 
-        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_ACCELEROMETER)[0]
+        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_GYROSCOPE)[0]
         # char_sens_d = char_sensor1.getDescriptors(forUUID=UUIDS.NOTIFICATION_DESCRIPTOR)[0]
 
         # char_sensor2 = self.svc_1.getCharacteristics('000000010000351221180009af100700')[0]
@@ -397,7 +408,7 @@ class MiBand2(Peripheral):
         char_sensor1 = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_HZ)[0]
         char_sens_d1 = char_sensor1.getDescriptors(forUUID=UUIDS.NOTIFICATION_DESCRIPTOR)[0]
 
-        char_sensor2 = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_ACCELEROMETER)[0]
+        char_sensor2 = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_GYROSCOPE)[0]
 
         # stop heart monitor continues
         char_ctrl.write(b'\x15\x01\x00', True)

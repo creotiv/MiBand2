@@ -40,11 +40,11 @@ def l(x):
 
 
 def b(x):
-    print 'Raw heart:', x.encode('hex')
+    print 'Raw heart:', x
 
 
 def f(x):
-    print 'Raw accel heart:', x.encode('hex')
+    print 'Raw accel heart:', x
 
 # band.start_heart_rate_realtime(heart_measure_callback=l)
 band.start_raw_data_realtime(heart_measure_callback=l, heart_raw_callback=b, accel_raw_callback=f)
