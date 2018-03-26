@@ -361,7 +361,7 @@ class MiBand2(Peripheral):
         if accel_raw_callback:
             self.accel_raw_callback = accel_raw_callback
 
-        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_GYROSCOPE)[0]
+        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
         # char_sens_d = char_sensor1.getDescriptors(forUUID=UUIDS.NOTIFICATION_DESCRIPTOR)[0]
 
         # char_sensor2 = self.svc_1.getCharacteristics('000000010000351221180009af100700')[0]
@@ -408,7 +408,7 @@ class MiBand2(Peripheral):
         char_sensor1 = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_HZ)[0]
         char_sens_d1 = char_sensor1.getDescriptors(forUUID=UUIDS.NOTIFICATION_DESCRIPTOR)[0]
 
-        char_sensor2 = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_GYROSCOPE)[0]
+        char_sensor2 = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
 
         # stop heart monitor continues
         char_ctrl.write(b'\x15\x01\x00', True)
