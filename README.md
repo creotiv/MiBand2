@@ -31,7 +31,7 @@ python example.py MAC_ADDRESS
 ```sh
 sudo hciconfig hci0 reset
 ```
-Also there is cool JS library that made Volodymyr Shymansky https://github.com/vshymanskyy/miband-js partly based on this work.
+Also there is cool JS library that made Volodymyr Shymansky https://github.com/vshymanskyy/miband-js
 
 # Donate
 If you like what im doing, you can send me some money for pepsi(i dont drink alcohol). https://www.paypal.me/creotiv
