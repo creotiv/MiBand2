@@ -21,11 +21,12 @@ sudo hcitool lescan
 ```
 5) Run this to auth device
 ```sh
-python example.py MAC_ADDRESS init
+python example.py --mac MAC_ADDRESS init
 ```
 6) Run this to call demo functions
 ```sh
-python example.py MAC_ADDRESS
+python example.py --standard --mac MAC_ADDRESS
+python example.py --help
 ```
 7) If you having problems(BLE can glitch sometimes) try this and repeat from 4)
 ```sh
