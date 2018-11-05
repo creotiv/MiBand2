@@ -56,7 +56,6 @@ class AuthenticationDelegate(DefaultDelegate):
                 day = struct.unpack("b", data[10:11])[0]
                 hour = struct.unpack("b", data[11:12])[0]
                 minute = struct.unpack("b", data[12:13])[0]
-                self.device.timestamp = datetime(year, month, day, hour, minute)
                 self.device.first_timestamp = datetime(year, month, day, hour, minute)
                 print("Fetch data from {}-{}-{} {}:{}".format(year, month, day, hour, minute))
                 self.device._char_fetch.write(b'\x02', False)
@@ -64,7 +63,7 @@ class AuthenticationDelegate(DefaultDelegate):
                 self.device.active = False
                 return
             else:
-                print("Unexpected data on handle " + hex(hnd) + ": " + str(data) + " " + data)
+                print("Unexpected data on handle " + str(hnd) + ": " + str(data.encode("hex")))
                 return
          # The activity characteristic sends the previews recorded information
          # from one given timestamp until now.
@@ -79,22 +78,20 @@ class AuthenticationDelegate(DefaultDelegate):
                 self.device.start_get_previews_data(t)
             else:
                 pkg = self.device.pkg
-                # pkg_head = int.from_bytes(data[0:1], byteorder='little')
-                # print("Packet: {} (real) - {} (head)".format(pkg, pkg_head))
                 self.device.pkg += 1
                 i = 1
                 while i < len(data):
                     index = int(pkg) * 4 + (i - 1) / 4
                     timestamp = self.device.first_timestamp + timedelta(minutes=index)
                     self.device.last_timestamp = timestamp
-                    # timestamp = timestamp + timedelta(hours=1)
-                    # category = int.from_bytes(data[i:i + 1], byteorder='little')
+                    category = int.from_bytes(data[i:i + 1], byteorder='little')
                     intensity = struct.unpack("B", data[i + 1:i + 2])[0]
                     steps = struct.unpack("B", data[i + 2:i + 3])[0]
                     heart_rate = struct.unpack("B", data[i + 3:i + 4])[0]
 
-                    print("{}: acceleration {}; steps {}; heart rate {};".format(
+                    print("{}: category: {}; acceleration {}; steps {}; heart rate {};".format(
                         timestamp.strftime('%d.%m - %H:%M'),
+                        category,
                         intensity,
                         steps,
                         heart_rate)
