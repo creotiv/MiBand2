@@ -21,7 +21,7 @@ sudo hcitool lescan
 ```
 5) Run this to auth device
 ```sh
-python example.py --mac MAC_ADDRESS init
+python example.py --mac MAC_ADDRESS --init
 ```
 6) Run this to call demo functions
 ```sh
