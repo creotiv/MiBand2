@@ -15,7 +15,7 @@ fp.write('time, heartrate\n')
 def log(rate):
     data = "%s, %s\n" % (int(time.time()), rate)
     fp.write(data)
-    print data
+    print(data)
 
 while True:
     try:
