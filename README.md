@@ -1,5 +1,5 @@
 # MiBand2
-Library to work with Xiaomi MiBand 2
+Library to work with Xiaomi MiBand 2 (Support python2/python3)
 [Read the Article here](https://medium.com/@a.nikishaev/how-i-hacked-xiaomi-miband-2-to-control-it-from-linux-a5bd2f36d3ad)
 
 # Contributors & Info Sources

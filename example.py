@@ -52,6 +52,7 @@ if args.standard:
     print ('Time:', band.get_current_time())
     print ('Steps:', band.get_steps())
     print ('Heart rate oneshot:', band.get_heart_rate_one_time())
+   
 
 
 def l(x):
