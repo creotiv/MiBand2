@@ -5,10 +5,10 @@ from stockstats import StockDataFrame
 import matplotlib.pyplot as plt
 
 df = pd.DataFrame.from_csv(sys.argv[1], index_col=None)
-print df.head
+print (df.head())
 df['time'] = pd.to_datetime(df['time'], unit='s')
 df = df.set_index('time')
-print df.describe()
+print (df.describe())
 # plt.subplot('111')
 # df.plot(kind='line')
 # plt.subplot('122')
