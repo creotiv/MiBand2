@@ -28,7 +28,7 @@ else:
     band.authenticate()
 
 if args.recorded:
-    print 'Print previews recorded data'
+    print('Print previews recorded data')
     band._auth_previews_data_notif(True)
     start_time = datetime.strptime("12.03.2018 01:01", "%d.%m.%Y %H:%M")
     band.start_get_previews_data(start_time)
@@ -36,34 +36,34 @@ if args.recorded:
         band.waitForNotifications(0.1)
 
 if args.standard:
-    print 'Message notif'
+    print ('Message notif')
     band.send_alert(ALERT_TYPES.MESSAGE)
     time.sleep(3)
     # this will vibrate till not off
-    print 'Phone notif'
+    print ('Phone notif')
     band.send_alert(ALERT_TYPES.PHONE)
     time.sleep(8)
-    print 'OFF'
+    print ('OFF')
     band.send_alert(ALERT_TYPES.NONE)
-    print 'Soft revision:',band.get_revision()
-    print 'Hardware revision:',band.get_hrdw_revision()
-    print 'Serial:',band.get_serial()
-    print 'Battery:', band.get_battery_info()
-    print 'Time:', band.get_current_time()
-    print 'Steps:', band.get_steps()
-    print 'Heart rate oneshot:', band.get_heart_rate_one_time()
+    print ('Soft revision:',band.get_revision())
+    print ('Hardware revision:',band.get_hrdw_revision())
+    print ('Serial:',band.get_serial())
+    print ('Battery:', band.get_battery_info())
+    print ('Time:', band.get_current_time())
+    print ('Steps:', band.get_steps())
+    print ('Heart rate oneshot:', band.get_heart_rate_one_time())
 
 
 def l(x):
-    print 'Realtime heart:', x
+    print ('Realtime heart:', x)
 
 
 def b(x):
-    print 'Raw heart:', x
+    print ('Raw heart:', x)
 
 
 def f(x):
-    print 'Raw accel heart:', x
+    print ('Raw accel heart:', x)
 
 if args.live:
     # band.start_heart_rate_realtime(heart_measure_callback=l)
