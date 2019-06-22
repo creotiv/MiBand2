@@ -11,6 +11,7 @@ parser.add_argument('-r', '--recorded',  action='store_true',help='Shows preview
 parser.add_argument('-l', '--live',  action='store_true',help='Measures live heart rate')
 parser.add_argument('-i', '--init',  action='store_true',help='Initializes the device')
 parser.add_argument('-m', '--mac', required=True, help='Mac address of the device')
+parser.add_argument('-t', '--set_current_time', action='store_true',help='Set time')
 args = parser.parse_args()
 
 MAC = args.mac # sys.argv[1]
@@ -53,7 +54,11 @@ if args.standard:
     print ('Steps:', band.get_steps())
     print ('Heart rate oneshot:', band.get_heart_rate_one_time())
    
-
+if args.set_current_time:
+    now = datetime.now()
+    print ('Set time to:', now)
+    print ('Returned: ', band.set_current_time(now))
+    print ('Time:', band.get_current_time())
 
 def l(x):
     print ('Realtime heart:', x)
