@@ -229,7 +229,8 @@ class MiBand2(Peripheral):
         res = struct.unpack('HHHHHHH', bytes[2:])
         return res
 
-    def _parse_date(self, bytes):
+    @staticmethod
+    def _parse_date(bytes):
         year = struct.unpack('h', bytes[0:2])[0] if len(bytes) >= 2 else None
         month = struct.unpack('b', bytes[2:3])[0] if len(bytes) >= 3 else None
         day = struct.unpack('b', bytes[3:4])[0] if len(bytes) >= 4 else None
@@ -240,6 +241,11 @@ class MiBand2(Peripheral):
         fractions256 = struct.unpack('b', bytes[8:9])[0] if len(bytes) >= 9 else None
 
         return {"date": datetime(*(year, month, day, hours, minutes, seconds)), "day_of_week": day_of_week, "fractions256": fractions256}
+
+    @staticmethod
+    def create_date_data(date):
+        data = struct.pack( 'hbbbbbbbxx', date.year, date.month, date.day, date.hour, date.minute, date.second, date.weekday(), 0 )
+        return data
 
     def _parse_battery_response(self, bytes):
         level = struct.unpack('b', bytes[1:2])[0] if len(bytes) >= 2 else None
@@ -329,6 +335,10 @@ class MiBand2(Peripheral):
     def get_current_time(self):
         char = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_CURRENT_TIME)[0]
         return self._parse_date(char.read()[0:9])
+
+    def set_current_time(self, date):
+        char = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_CURRENT_TIME)[0]
+        return char.write(self.create_date_data(date), True)
 
     def get_revision(self):
         svc = self.getServiceByUUID(UUIDS.SERVICE_DEVICE_INFO)
