@@ -67,6 +67,8 @@ class ALERT_TYPES(object):
     NONE = b'\x00'
     MESSAGE = b'\x01'
     PHONE = b'\x02'
+    FIND_DEVICE = b'\x03'
+    FOCUS_MESSAGE = b'\xfe'
 
 
 class QUEUE_TYPES(object):
