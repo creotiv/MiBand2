@@ -263,7 +263,6 @@ class MiBand2(Peripheral):
             "status": status,
             "level": level,
             "last_level": last_level,
-            "last_level": last_level,
             "last_charge": datetime_last_charge,
             "last_off": datetime_last_off
         }
