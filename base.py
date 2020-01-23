@@ -66,7 +66,7 @@ class AuthenticationDelegate(DefaultDelegate):
                 self.device.active = False
                 return
             else:
-                print("Unexpected data on handle " + str(hnd) + ": " + str(data.encode("hex")))
+                print("Unexpected data on handle " + str(hnd) + ": " + data.hex())
                 return
          # The activity characteristic sends the previews recorded information
          # from one given timestamp until now.
@@ -100,6 +100,8 @@ class AuthenticationDelegate(DefaultDelegate):
                         steps,
                         heart_rate)
                     )
+                    if self.device.outfile:
+                        self.device.outfile.write(f"{timestamp.strftime('%d.%m.%Y - %H:%M')},{category},{intensity},{steps},{heart_rate}\n")
 
                     i += 4
 
@@ -133,6 +135,8 @@ class MiBand2(Peripheral):
         self._log.info('Connecting to ' + mac_address)
         Peripheral.__init__(self, mac_address, addrType=ADDR_TYPE_RANDOM)
         self._log.info('Connected')
+
+        self.outfile = None
 
         self.timeout = timeout
         self.mac_address = mac_address
@@ -214,7 +218,7 @@ class MiBand2(Peripheral):
 
     def _parse_raw_accel(self, bytes):
         res = []
-        for i in xrange(3):
+        for i in range(3):
             g = struct.unpack('hhh', bytes[2 + i * 6:8 + i * 6])
             res.append({'x': g[0], 'y': g[1], 'wtf': g[2]})
         # WTF
@@ -262,7 +266,6 @@ class MiBand2(Peripheral):
         res = {
             "status": status,
             "level": level,
-            "last_level": last_level,
             "last_level": last_level,
             "last_charge": datetime_last_charge,
             "last_off": datetime_last_off
@@ -368,10 +371,20 @@ class MiBand2(Peripheral):
         # measure interval set to off
         self._char_heart_ctrl.write(b'\x14\x00', True)
         if enabled:
+            if measure_minute_interval > 120:
+                measure_minute_interval = 120
             self._char_heart_ctrl.write(b'\x15\x00\x01', True)
             # measure interval set
-            self._char_heart_ctrl.write(b'\x14' + str(measure_minute_interval).encode(), True)
+            self._char_heart_ctrl.write(b'\x14' + bytes([measure_minute_interval]), True)
         char_d.write(b'\x00\x00', True)
+
+    def set_heart_monitor_measurement_interval(self, enabled=True, measure_minute_interval=1):
+        if enabled:
+            if measure_minute_interval > 120:
+                measure_minute_interval = 120
+            self._char_heart_ctrl.write(b'\x14' + bytes([measure_minute_interval]), True)
+        else:
+            self._char_heart_ctrl.write(b'\x14\x00', True)
 
     def get_serial(self):
         svc = self.getServiceByUUID(UUIDS.SERVICE_DEVICE_INFO)
@@ -385,14 +398,14 @@ class MiBand2(Peripheral):
         a = char.read()
         steps = struct.unpack('h', a[1:3])[0] if len(a) >= 3 else None
         meters = struct.unpack('h', a[5:7])[0] if len(a) >= 7 else None
-        fat_gramms = struct.unpack('h', a[2:4])[0] if len(a) >= 4 else None
+        fat_grams = struct.unpack('h', a[2:4])[0] if len(a) >= 4 else None
         # why only 1 byte??
-        callories = struct.unpack('b', a[9:10])[0] if len(a) >= 10 else None
+        calories = struct.unpack('b', a[9:10])[0] if len(a) >= 10 else None
         return {
             "steps": steps,
             "meters": meters,
-            "fat_gramms": fat_gramms,
-            "callories": callories
+            "fat_grams": fat_grams,
+            "calories": calories
 
         }
 
@@ -519,10 +532,10 @@ class MiBand2(Peripheral):
         self.waitForNotifications(0.1)
         print("Trigger activity communication")
         year = struct.pack("<H", start_timestamp.year)
-        month = struct.pack("<H", start_timestamp.month)[0]
-        day = struct.pack("<H", start_timestamp.day)[0]
-        hour = struct.pack("<H", start_timestamp.hour)[0]
-        minute = struct.pack("<H", start_timestamp.minute)[0]
+        month = bytes([struct.pack("<H", start_timestamp.month)[0]])
+        day = bytes([struct.pack("<H", start_timestamp.day)[0]])
+        hour = bytes([struct.pack("<H", start_timestamp.hour)[0]])
+        minute = bytes([struct.pack("<H", start_timestamp.minute)[0]])
         ts = year + month + day + hour + minute
         trigger = b'\x01\x01' + ts + b'\x00\x08'
         self._char_fetch.write(trigger, False)
