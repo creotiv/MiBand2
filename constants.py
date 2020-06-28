@@ -78,3 +78,11 @@ class QUEUE_TYPES(object):
     HEART = 'heart'
     RAW_ACCEL = 'raw_accel'
     RAW_HEART = 'raw_heart'
+
+class DATA_TYPES(object):
+
+    __metaclass__ = Immutable
+
+    NONE = 0x00
+    PPG = 0x01
+    ACC = 0x02

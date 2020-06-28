@@ -17,12 +17,11 @@ def log(raw_ppg_array):
     fp.write(data)
     print(data)
 
-while True:
-    try:
-        band = MiBand2(MAC, debug=True)
-        band.setSecurityLevel(level="medium")
-        band.authenticate()
-        band.start_ppg_data_realtime(heart_raw_callback=log)
-        band.disconnect()
-    except BTLEException:
-        pass
+try:
+    band = MiBand2(MAC, debug=True)
+    band.setSecurityLevel(level="medium")
+    band.authenticate()
+    band.start_ppg_data_realtime(heart_raw_callback=log)
+    band.disconnect()
+except BTLEException:
+    pass

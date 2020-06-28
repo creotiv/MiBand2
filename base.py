@@ -10,7 +10,7 @@ except ImportError:
 from bluepy.btle import Peripheral, DefaultDelegate, ADDR_TYPE_RANDOM, BTLEException
 
 
-from constants import UUIDS, AUTH_STATES, ALERT_TYPES, QUEUE_TYPES
+from constants import UUIDS, AUTH_STATES, ALERT_TYPES, QUEUE_TYPES, DATA_TYPES
 
 
 class AuthenticationDelegate(DefaultDelegate):
@@ -48,7 +48,10 @@ class AuthenticationDelegate(DefaultDelegate):
             if len(data) == 20 and struct.unpack('b', data[0:1])[0] == 1:
                 self.device.queue.put((QUEUE_TYPES.RAW_ACCEL, data))
             elif len(data) == 16:
+                self.device.queue.put((QUEUE_TYPES.RAW_HEART, data))    
+            elif self.device.dataType == DATA_TYPES.PPG:
                 self.device.queue.put((QUEUE_TYPES.RAW_HEART, data))
+
         # The fetch characteristic controls the communication with the activity characteristic.
         # It can trigger the communication.
         elif hnd == self.device._char_fetch.getHandle():
@@ -141,6 +144,7 @@ class MiBand2(Peripheral):
         self.heart_measure_callback = None
         self.heart_raw_callback = None
         self.accel_raw_callback = None
+        self.dataType = DATA_TYPES.NONE
 
         self.svc_1 = self.getServiceByUUID(UUIDS.SERVICE_MIBAND1)
         self.svc_2 = self.getServiceByUUID(UUIDS.SERVICE_MIBAND2)
@@ -547,6 +551,10 @@ class MiBand2(Peripheral):
 
     def stop_ppg_data_realtime(self):
         self._log.debug("stop_ppg_data_realtime")
+        self.dataType = DATA_TYPES.PPG
+
+        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
+        char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
 
         self._log.debug("Stop sensor data")
         char_sensor.write(b'\x03')
