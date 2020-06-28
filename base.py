@@ -111,7 +111,7 @@ class AuthenticationDelegate(DefaultDelegate):
                         return
         else:
             self.device._log.error("Unhandled Response " + hex(hnd) + ": " +
-                                   str(data.encode("hex")) + " len:" + str(len(data)))
+                                   str(data) + " len:" + str(len(data)))
 
 
 class MiBand2(Peripheral):
@@ -498,6 +498,62 @@ class MiBand2(Peripheral):
             if (time.time() - t) >= 12:
                 char_ctrl.write(b'\x16', True)
                 t = time.time()
+
+    def writeHandle(self, handle, data, reply=False):
+        logging.debug("writeHandle %x %s", handle, data)
+        self.writeCharacteristic(handle, data, reply)
+
+    def start_ppg_data_realtime(self, sample_duration_seconds=30, heart_measure_callback=None, heart_raw_callback=None, accel_raw_callback=None):
+        if heart_measure_callback:
+            self.heart_measure_callback = heart_measure_callback
+        if heart_raw_callback:
+            self.heart_raw_callback = heart_raw_callback
+        if accel_raw_callback:
+            self.accel_raw_callback = accel_raw_callback
+
+        logging.debug("start_ppg_data_realtime")
+
+        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
+        char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
+        
+        self.writeHandle(0x36, b'\x01\x00', True)  # 36 01 00
+
+        self._log.debug("Enable PPG raw data")
+        char_sensor.write(b'\x01\x02\x19')  # 35 01 02 19
+
+        self._log.debug("Stop heart continuous")
+        char_ctrl.write(b'\x15\x01\x00', True)  # 2C 15 01 00
+
+        self._log.debug("Start heart continuous")
+        char_ctrl.write(b'\x15\x01\x01', True)  # 2C 15 01 01
+
+        self._log.debug("Start sensor data")
+        char_sensor.write(b'\x02')                 # 35 02
+
+        ping_time = datetime.now() + timedelta(seconds=10)
+        stop_time = datetime.now() + timedelta(seconds=sample_duration_seconds)
+        now_time = datetime.now()
+        while now_time < stop_time:
+            self.waitForNotifications(0.5)
+            self._parse_queue()
+            if now_time > ping_time:
+                logging.debug("Writing ping")
+                char_ctrl.write(b'\x16', True)
+                ping_time += timedelta(seconds=10)
+            now_time = datetime.now()
+        
+        self.stop_ppg_data_realtime()
+
+
+    def stop_ppg_data_realtime(self):
+        self._log.debug("stop_ppg_data_realtime")
+
+        self._log.debug("Stop sensor data")
+        char_sensor.write(b'\x03')
+
+        self._log.debug("Stop heart continuous")
+        char_ctrl.write(b'\x15\x01\x00', True)  # 2C 15 01 00
+
 
     def stop_realtime(self):
         char_m = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_MEASURE)[0]
