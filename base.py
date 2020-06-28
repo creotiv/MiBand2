@@ -230,7 +230,13 @@ class MiBand2(Peripheral):
         return res
 
     def _parse_raw_heart(self, bytes):
-        res = struct.unpack('HHHHHHH', bytes[2:])
+        #logging.debug("_parse_raw_heart: %s",  bytes)
+        data_len = len(bytes)
+        data_points = (data_len-2)//2
+        res = []
+        for i in range(data_points):
+            offset = 2*(i+1)
+            res += struct.unpack('H', bytes[offset:offset+2])
         return res
 
     @staticmethod
@@ -516,6 +522,7 @@ class MiBand2(Peripheral):
             self.accel_raw_callback = accel_raw_callback
 
         logging.debug("start_ppg_data_realtime")
+        self.dataType = DATA_TYPES.PPG
 
         char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
         char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
@@ -551,7 +558,6 @@ class MiBand2(Peripheral):
 
     def stop_ppg_data_realtime(self):
         self._log.debug("stop_ppg_data_realtime")
-        self.dataType = DATA_TYPES.PPG
 
         char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
         char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
@@ -562,6 +568,7 @@ class MiBand2(Peripheral):
         self._log.debug("Stop heart continuous")
         char_ctrl.write(b'\x15\x01\x00', True)  # 2C 15 01 00
 
+        self.dataType = DATA_TYPES.NONE
 
     def stop_realtime(self):
         char_m = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_MEASURE)[0]
