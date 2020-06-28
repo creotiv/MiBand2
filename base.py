@@ -71,7 +71,7 @@ class AuthenticationDelegate(DefaultDelegate):
          # The activity characteristic sends the previews recorded information
          # from one given timestamp until now.
         elif hnd == self.device._char_activity.getHandle():
-            if len(data) % 4 is not 1:
+            if len(data) % 4 != 1:
                 if self.device.last_timestamp > datetime.now() - timedelta(minutes=1):
                     self.device.active = False
                     return
@@ -115,17 +115,13 @@ class AuthenticationDelegate(DefaultDelegate):
 
 
 class MiBand2(Peripheral):
-    # _KEY = b'\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x40\x41\x42\x43\x44\x45'
-    # _send_key_cmd = struct.pack('<18s', b'\x01\x08' + _KEY)
-    # _send_rnd_cmd = struct.pack('<2s', b'\x02\x08')
-    # _send_enc_key = struct.pack('<2s', b'\x03\x08')
-    _KEY = b'\xf5\xd2\x29\x87\x65\x0a\x1d\x82\x05\xab\x82\xbe\xb9\x38\x59\xcf'
-    _send_key_cmd = struct.pack('<18s', b'\x01\x00' + _KEY)
-    _send_rnd_cmd = struct.pack('<2s', b'\x02\x00')
-    _send_enc_key = struct.pack('<2s', b'\x03\x00')
+    _KEY = b'\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x40\x41\x42\x43\x44\x45'
+    _send_key_cmd = struct.pack('<18s', b'\x01\x08' + _KEY)
+    _send_rnd_cmd = struct.pack('<2s', b'\x02\x08')
+    _send_enc_key = struct.pack('<2s', b'\x03\x08')
     pkg = 0
 
-    def __init__(self, mac_address, timeout=0.5, debug=False):
+    def __init__(self, mac_address, timeout=0.5, debug=False, iface=0):
         FORMAT = '%(asctime)-15s %(name)s (%(levelname)s) > %(message)s'
         logging.basicConfig(format=FORMAT)
         log_level = logging.WARNING if not debug else logging.DEBUG
@@ -133,7 +129,7 @@ class MiBand2(Peripheral):
         self._log.setLevel(log_level)
 
         self._log.info('Connecting to ' + mac_address)
-        Peripheral.__init__(self, mac_address, addrType=ADDR_TYPE_RANDOM)
+        Peripheral.__init__(self, mac_address, addrType=ADDR_TYPE_RANDOM, iface=iface)
         self._log.info('Connected')
 
         self.outfile = None
