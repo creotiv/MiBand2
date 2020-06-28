@@ -15,7 +15,7 @@ fp.write('time, PPG_data\n')
 def log(raw_ppg_array):
     data = "%s, %s\n" % (int(time.time()), raw_ppg_array)
     fp.write(data)
-    print(data)
+    print(raw_ppg_array)
 
 try:
     band = MiBand2(MAC, debug=True)
