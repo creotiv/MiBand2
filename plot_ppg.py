@@ -1,9 +1,13 @@
 import argparse
 import logging
 import matplotlib.pyplot as plt
+import matplotlib.axes as plt_axes
 import numpy as np
+import time
 
-import csv
+from base import MiBand2
+from bluepy.btle import BTLEException
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--mac', help='MAC address of the device', default="None")
@@ -57,26 +61,98 @@ def plot_file_type1(file_name):
     timesd = times/(len(all_data)*1.0)
     timesd *= duration
     
-    plot_data(timesd, all_data)
-            
-def start_plot():
-    hl, = plt.plot([], [])
-    return hl
+    plot_all_data(timesd, all_data)
 
-def update_line(hl, new_data):
-    #hl.set_xdata(np.append(hl.get_xdata(), new_data))
-    hl.set_ydata(np.append(hl.get_ydata(), new_data))
-    plt.draw()
-    plt.pause(0.0001)
-
-def plot_data(xdata, ydata):
+def plot_all_data(xdata, ydata):
     plt.plot(xdata, ydata)
     plt.title('Raw PPG data')
     plt.xlabel('Time (s)')
     plt.ylabel('Intensity (arb.)')    
     plt.show()
+            
+def start_plot():
+    global ax
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    hl, = plt.plot([], [])
+    plt.title('Raw PPG data')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Intensity (arb.)')    
+    return hl
+
+def update_line(ax, hl, new_xdata, new_ydata):
+    hl.set_xdata(np.append(hl.get_xdata(), new_xdata))
+    hl.set_ydata(np.append(hl.get_ydata(), new_ydata))
+    
+    ax.relim()
+    ax.autoscale_view() 
+    
+    plt.draw()
+    plt.pause(0.0001)
+
+
+def plot_data(time_offset, delta_t, data):
+    global ax, plot
+    new_times = np.array(range(len(data)))
+    new_times = new_times/(len(data)*1.0)
+    new_times *= delta_t*len(data)
+    new_times += time_offset
+    
+    logging.info("dt: %s, Offset: %s", delta_t, time_offset)
+    update_line(ax, plot, new_times, data)
+
+def raw_data(data):
+    global num_data_points, start_time, last_time, dt, old_data
+    
+    now = time.time()
+    
+    if num_data_points == 0:
+        num_data_points = len(data)
+        old_data = data
+        last_time = now
+        return
+
+
+    if old_data is not None:
+        dt = 0.04# (now - last_time)/len(data)
+        start_time = now - dt*num_data_points
+        logging.info("Initial dt: %s", dt)
+        plot_data(0, dt, old_data)
+        old_data = None
+
+    dt = 0.04# (now - start_time)/(len(data)+num_data_points)
+    logging.debug("Updated dt: %s", dt)
+
+    time_offset = num_data_points * dt
+    plot_data(time_offset, dt, data)
+    
+    num_data_points += len(data)
+    last_time = now
+
+def plot_live_test(MAC):
+    raw_data([1,3,2])
+    time.sleep(1)
+    raw_data([4,3,5])
+    plt.show()
+
+def plot_live(MAC):
+    try:
+        band = MiBand2(MAC, debug=True)
+        band.setSecurityLevel(level="medium")
+        band.authenticate()
+        band.start_ppg_data_realtime(sample_duration_seconds=60, heart_raw_callback=raw_data)
+        band.disconnect()
+        plt.show()
+    except BTLEException:
+        pass
 
 if args.file:
     print("Plotting data from file: %s " % args.file)
     plot_file_type1(args.file)
+elif args.mac != "None":
+    print("Plotting live data from device: %s " % args.mac)
+    num_data_points = 0
+    plot = start_plot()
+    plot_live(args.mac)
 
