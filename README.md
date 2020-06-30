@@ -37,8 +37,30 @@ sudo hciconfig hci0 reset
 ```
 Also there is cool JS library that made Volodymyr Shymansky https://github.com/vshymanskyy/miband-js
 
+# Raw PPG data
+
+You can record raw [PPG](https://en.wikipedia.org/wiki/Photoplethysmogram) data to a file:
+```sh
+python3 dump_ppg.py MAC_address ppg_data.csv
+```
+
+The resulting data can be plotted:
+```sh
+python3 plot_ppg.py -f ppg_data.csv
+```
+
+![Raw Data](/raw_ppg.png)
+
+![Raw Data Zoomed in](/raw_ppg_zoom.png)
+
+Or you can also view raw the PPG data in realtime:
+
+```sh
+python3 plot_ppg.py -m MAC_address
+```
+
 # Donate
-If you like what im doing, you can send me some money for pepsi(i dont drink alcohol). https://patreon.com/mlworld
+If you like what I'm doing, you can send me some money for pepsi(I dont drink alcohol). https://patreon.com/mlworld
 
 <p xmlns:dct="http://purl.org/dc/terms/">
   <a rel="license"
