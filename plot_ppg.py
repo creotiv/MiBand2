@@ -115,13 +115,13 @@ def raw_data(data):
 
 
     if old_data is not None:
-        dt = 0.04# (now - last_time)/len(data)
+        dt = 0.041# (now - last_time)/len(data)
         start_time = now - dt*num_data_points
         logging.info("Initial dt: %s", dt)
         plot_data(0, dt, old_data)
         old_data = None
 
-    dt = 0.04# (now - start_time)/(len(data)+num_data_points)
+    dt = 0.041# (now - start_time)/(len(data)+num_data_points)
     logging.debug("Updated dt: %s", dt)
 
     time_offset = num_data_points * dt
@@ -129,12 +129,6 @@ def raw_data(data):
     
     num_data_points += len(data)
     last_time = now
-
-def plot_live_test(MAC):
-    raw_data([1,3,2])
-    time.sleep(1)
-    raw_data([4,3,5])
-    plt.show()
 
 def plot_live(MAC):
     try:
