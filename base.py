@@ -10,7 +10,7 @@ except ImportError:
 from bluepy.btle import Peripheral, DefaultDelegate, ADDR_TYPE_RANDOM, BTLEException
 
 
-from constants import UUIDS, AUTH_STATES, ALERT_TYPES, QUEUE_TYPES
+from constants import UUIDS, AUTH_STATES, ALERT_TYPES, QUEUE_TYPES, DATA_TYPES
 
 
 class AuthenticationDelegate(DefaultDelegate):
@@ -48,7 +48,10 @@ class AuthenticationDelegate(DefaultDelegate):
             if len(data) == 20 and struct.unpack('b', data[0:1])[0] == 1:
                 self.device.queue.put((QUEUE_TYPES.RAW_ACCEL, data))
             elif len(data) == 16:
+                self.device.queue.put((QUEUE_TYPES.RAW_HEART, data))    
+            elif self.device.dataType == DATA_TYPES.PPG:
                 self.device.queue.put((QUEUE_TYPES.RAW_HEART, data))
+
         # The fetch characteristic controls the communication with the activity characteristic.
         # It can trigger the communication.
         elif hnd == self.device._char_fetch.getHandle():
@@ -71,7 +74,7 @@ class AuthenticationDelegate(DefaultDelegate):
          # The activity characteristic sends the previews recorded information
          # from one given timestamp until now.
         elif hnd == self.device._char_activity.getHandle():
-            if len(data) % 4 is not 1:
+            if len(data) % 4 != 1:
                 if self.device.last_timestamp > datetime.now() - timedelta(minutes=1):
                     self.device.active = False
                     return
@@ -111,21 +114,17 @@ class AuthenticationDelegate(DefaultDelegate):
                         return
         else:
             self.device._log.error("Unhandled Response " + hex(hnd) + ": " +
-                                   str(data.encode("hex")) + " len:" + str(len(data)))
+                                   str(data) + " len:" + str(len(data)))
 
 
 class MiBand2(Peripheral):
-    # _KEY = b'\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x40\x41\x42\x43\x44\x45'
-    # _send_key_cmd = struct.pack('<18s', b'\x01\x08' + _KEY)
-    # _send_rnd_cmd = struct.pack('<2s', b'\x02\x08')
-    # _send_enc_key = struct.pack('<2s', b'\x03\x08')
-    _KEY = b'\xf5\xd2\x29\x87\x65\x0a\x1d\x82\x05\xab\x82\xbe\xb9\x38\x59\xcf'
-    _send_key_cmd = struct.pack('<18s', b'\x01\x00' + _KEY)
-    _send_rnd_cmd = struct.pack('<2s', b'\x02\x00')
-    _send_enc_key = struct.pack('<2s', b'\x03\x00')
+    _KEY = b'\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x40\x41\x42\x43\x44\x45'
+    _send_key_cmd = struct.pack('<18s', b'\x01\x08' + _KEY)
+    _send_rnd_cmd = struct.pack('<2s', b'\x02\x08')
+    _send_enc_key = struct.pack('<2s', b'\x03\x08')
     pkg = 0
 
-    def __init__(self, mac_address, timeout=0.5, debug=False):
+    def __init__(self, mac_address, timeout=0.5, debug=False, iface=0):
         FORMAT = '%(asctime)-15s %(name)s (%(levelname)s) > %(message)s'
         logging.basicConfig(format=FORMAT)
         log_level = logging.WARNING if not debug else logging.DEBUG
@@ -133,7 +132,7 @@ class MiBand2(Peripheral):
         self._log.setLevel(log_level)
 
         self._log.info('Connecting to ' + mac_address)
-        Peripheral.__init__(self, mac_address, addrType=ADDR_TYPE_RANDOM)
+        Peripheral.__init__(self, mac_address, addrType=ADDR_TYPE_RANDOM, iface=iface)
         self._log.info('Connected')
 
         self.outfile = None
@@ -145,6 +144,7 @@ class MiBand2(Peripheral):
         self.heart_measure_callback = None
         self.heart_raw_callback = None
         self.accel_raw_callback = None
+        self.dataType = DATA_TYPES.NONE
 
         self.svc_1 = self.getServiceByUUID(UUIDS.SERVICE_MIBAND1)
         self.svc_2 = self.getServiceByUUID(UUIDS.SERVICE_MIBAND2)
@@ -230,7 +230,13 @@ class MiBand2(Peripheral):
         return res
 
     def _parse_raw_heart(self, bytes):
-        res = struct.unpack('HHHHHHH', bytes[2:])
+        #logging.debug("_parse_raw_heart: %s",  bytes)
+        data_len = len(bytes)
+        data_points = (data_len-2)//2
+        res = []
+        for i in range(data_points):
+            offset = 2*(i+1)
+            res += struct.unpack('H', bytes[offset:offset+2])
         return res
 
     @staticmethod
@@ -502,6 +508,67 @@ class MiBand2(Peripheral):
             if (time.time() - t) >= 12:
                 char_ctrl.write(b'\x16', True)
                 t = time.time()
+
+    def writeHandle(self, handle, data, reply=False):
+        logging.debug("writeHandle %x %s", handle, data)
+        self.writeCharacteristic(handle, data, reply)
+
+    def start_ppg_data_realtime(self, sample_duration_seconds=30, heart_measure_callback=None, heart_raw_callback=None, accel_raw_callback=None):
+        if heart_measure_callback:
+            self.heart_measure_callback = heart_measure_callback
+        if heart_raw_callback:
+            self.heart_raw_callback = heart_raw_callback
+        if accel_raw_callback:
+            self.accel_raw_callback = accel_raw_callback
+
+        logging.debug("start_ppg_data_realtime")
+        self.dataType = DATA_TYPES.PPG
+
+        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
+        char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
+        
+        self.writeHandle(0x36, b'\x01\x00', True)  # 36 01 00
+
+        self._log.debug("Enable PPG raw data")
+        char_sensor.write(b'\x01\x02\x19')  # 35 01 02 19
+
+        self._log.debug("Stop heart continuous")
+        char_ctrl.write(b'\x15\x01\x00', True)  # 2C 15 01 00
+
+        self._log.debug("Start heart continuous")
+        char_ctrl.write(b'\x15\x01\x01', True)  # 2C 15 01 01
+
+        self._log.debug("Start sensor data")
+        char_sensor.write(b'\x02')                 # 35 02
+
+        now_time = datetime.now()
+        ping_time = now_time + timedelta(seconds=10)
+        stop_time = now_time + timedelta(seconds=sample_duration_seconds)
+        while now_time < stop_time:
+            self.waitForNotifications(0.5)
+            self._parse_queue()
+            if now_time > ping_time:
+                logging.debug("Writing ping")
+                char_ctrl.write(b'\x16', True)
+                ping_time += timedelta(seconds=10)
+            now_time = datetime.now()
+        
+        self.stop_ppg_data_realtime()
+
+
+    def stop_ppg_data_realtime(self):
+        self._log.debug("stop_ppg_data_realtime")
+
+        char_sensor = self.svc_1.getCharacteristics(UUIDS.CHARACTERISTIC_SENSOR)[0]
+        char_ctrl = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_CONTROL)[0]
+
+        self._log.debug("Stop sensor data")
+        char_sensor.write(b'\x03')
+
+        self._log.debug("Stop heart continuous")
+        char_ctrl.write(b'\x15\x01\x00', True)  # 2C 15 01 00
+
+        self.dataType = DATA_TYPES.NONE
 
     def stop_realtime(self):
         char_m = self.svc_heart.getCharacteristics(UUIDS.CHARACTERISTIC_HEART_RATE_MEASURE)[0]
