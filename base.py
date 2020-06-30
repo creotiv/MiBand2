@@ -541,9 +541,9 @@ class MiBand2(Peripheral):
         self._log.debug("Start sensor data")
         char_sensor.write(b'\x02')                 # 35 02
 
-        ping_time = datetime.now() + timedelta(seconds=10)
-        stop_time = datetime.now() + timedelta(seconds=sample_duration_seconds)
         now_time = datetime.now()
+        ping_time = now_time + timedelta(seconds=10)
+        stop_time = now_time + timedelta(seconds=sample_duration_seconds)
         while now_time < stop_time:
             self.waitForNotifications(0.5)
             self._parse_queue()
