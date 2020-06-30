@@ -49,7 +49,7 @@ try:
     band = MiBand2(MAC, debug=True)
     band.setSecurityLevel(level="medium")
     band.authenticate()
-    band.start_ppg_data_realtime(sample_duration_seconds=30, heart_raw_callback=log, heart_measure_callback=heart)
+    band.start_ppg_data_realtime(sample_duration_seconds=60, heart_raw_callback=log, heart_measure_callback=heart)
     band.disconnect()
     writedata()
 except BTLEException:
