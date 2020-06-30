@@ -99,13 +99,14 @@ def plot_data(time_offset, delta_t, data):
     new_times *= delta_t*len(data)
     new_times += time_offset
     
-    logging.info("dt: %s, Offset: %s", delta_t, time_offset)
+    logging.debug("dt: %s, Offset: %s", delta_t, time_offset)
     update_line(ax, plot, new_times, data)
 
 def raw_data(data):
-    global num_data_points, start_time, last_time, dt, old_data
+    global num_data_points, start_time, last_time, old_data
     
     now = time.time()
+    dt = 0.04 # Manually calculated via timed calibration run (~1225 data points over ~50 seconds)
     
     if num_data_points == 0:
         num_data_points = len(data)
@@ -115,14 +116,9 @@ def raw_data(data):
 
 
     if old_data is not None:
-        dt = 0.041# (now - last_time)/len(data)
         start_time = now - dt*num_data_points
-        logging.info("Initial dt: %s", dt)
         plot_data(0, dt, old_data)
         old_data = None
-
-    dt = 0.041# (now - start_time)/(len(data)+num_data_points)
-    logging.debug("Updated dt: %s", dt)
 
     time_offset = num_data_points * dt
     plot_data(time_offset, dt, data)
