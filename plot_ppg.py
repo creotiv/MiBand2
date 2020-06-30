@@ -8,7 +8,6 @@ import time
 from base import MiBand2
 from bluepy.btle import BTLEException
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '-m', '--mac', help='MAC address of the device', default="None")
